@@ -19,7 +19,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/login")
+    @PostMapping("/login") //end-point to handle login
     public ResponseEntity<UserDto> login(@RequestBody LoginRequestDto request) {
         return authService.login(request.getEmail(), request.getPassword());
     }
