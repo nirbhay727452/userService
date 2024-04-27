@@ -39,7 +39,7 @@ public class AuthService {
         User user = userOptional.get();
 
         if (!bCryptPasswordEncoder.matches(password, user.getPassword())) {
-            return null;
+            return null;// can throw exception if password dont matches
         }
 
         String token = RandomStringUtils.randomAlphanumeric(30);
@@ -87,7 +87,7 @@ public class AuthService {
         User user = new User();
         user.setEmail(email);
         user.setPassword(bCryptPasswordEncoder.encode(password)); // We should store the encrypted password in the DB for a user.
-        
+        System.out.println("got user signup request with details user :"+ user.getEmail()+"  and encoded passsword :"+user.getPassword());
         User savedUser = userRepository.save(user);
 
         return UserDto.from(savedUser);
