@@ -78,6 +78,7 @@ public class AuthService {
                 .signWith(key,alg)
                 .compact();
 
+
         Session session = new Session();
         session.setSessionStatus(SessionStatus.ACTIVE);
         session.setToken(jws);
