@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
 import java.util.Date;
 
 @Entity
@@ -17,11 +16,4 @@ public class Session extends BaseModel {
     private User user;
     @Enumerated(EnumType.ORDINAL)
     private SessionStatus sessionStatus;
-
-    @Column(name = "expiring_at")
-    private Instant expiringAt1;
-
-    @Column(name = "session_status")
-    private Byte sessionStatus1;
-
 }

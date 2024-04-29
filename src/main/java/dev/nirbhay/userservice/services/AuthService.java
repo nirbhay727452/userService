@@ -6,16 +6,24 @@ import dev.nirbhay.userservice.models.User;
 import dev.nirbhay.userservice.models.Session;
 import dev.nirbhay.userservice.repositories.SessionRepository;
 import dev.nirbhay.userservice.repositories.UserRepository;
+import io.jsonwebtoken.security.MacAlgorithm;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMapAdapter;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
-import java.util.HashMap;
-import java.util.Optional;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+
+import java.time.LocalDate;
+import java.util.*;
 
 @Service
 public class AuthService {
@@ -30,6 +38,11 @@ public class AuthService {
     }
 
     public ResponseEntity<UserDto> login(String email, String password) {
+        /*
+        todo :
+         1. add validation for max 3 sessions per users
+         2. set token expiry while login and also validate while next login request
+        */
         Optional<User> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isEmpty()) {
@@ -42,11 +55,32 @@ public class AuthService {
             return null;// can throw exception if password dont matches
         }
 
-        String token = RandomStringUtils.randomAlphanumeric(30);
+        //String token = RandomStringUtils.randomAlphanumeric(30);
+        // Create a test key suitable for the desired HMAC-SHA algorithm:
+        MacAlgorithm alg = Jwts.SIG.HS256; //or HS384 or HS256
+        SecretKey key = alg.key().build();
+
+        //String message = "Hello World!";
+        //json :: Key:value
+        Map<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("email", user.getEmail());
+        jsonMap.put("roles", List.of(user.getRoles()) );
+        jsonMap.put("created_at", new Date());
+        jsonMap.put("expiry_at", DateUtils.addDays(new Date(), 10));
+
+        //byte[] content = message.getBytes(StandardCharsets.UTF_8);
+        // Create the compact JWS:
+  //      String jws = Jwts.builder().content(content, "text/plain").signWith(key, alg).compact();
+        // Parse the compact JWS:
+  //      content = Jwts.parser().verifyWith(key).build().parseSignedContent(jws).getPayload();
+        String jws = Jwts.builder()
+                .claims(jsonMap)
+                .signWith(key,alg)
+                .compact();
 
         Session session = new Session();
         session.setSessionStatus(SessionStatus.ACTIVE);
-        session.setToken(token);
+        session.setToken(jws);
         session.setUser(user);
         sessionRepository.save(session);
 
@@ -57,7 +91,7 @@ public class AuthService {
 //        headers.put(HttpHeaders.SET_COOKIE, token);
 
         MultiValueMapAdapter<String, String> headers = new MultiValueMapAdapter<>(new HashMap<>());
-        headers.add(HttpHeaders.SET_COOKIE, "auth-token:" + token);
+        headers.add(HttpHeaders.SET_COOKIE, "auth-token:" + jws);
 
 
 
