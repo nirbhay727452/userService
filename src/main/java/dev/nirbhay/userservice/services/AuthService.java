@@ -1,11 +1,15 @@
 package dev.nirbhay.userservice.services;
 
 import dev.nirbhay.userservice.dtos.UserDto;
+import dev.nirbhay.userservice.models.Role;
 import dev.nirbhay.userservice.models.SessionStatus;
 import dev.nirbhay.userservice.models.User;
 import dev.nirbhay.userservice.models.Session;
 import dev.nirbhay.userservice.repositories.SessionRepository;
 import dev.nirbhay.userservice.repositories.UserRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.security.MacAlgorithm;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -37,6 +41,7 @@ public class AuthService {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
+    //add support of only 2 active sessions max at a time
     public ResponseEntity<UserDto> login(String email, String password) {
         /*
         todo :
@@ -83,6 +88,7 @@ public class AuthService {
         session.setSessionStatus(SessionStatus.ACTIVE);
         session.setToken(jws);
         session.setUser(user);
+        //add expiry to session
         sessionRepository.save(session);
 
         UserDto userDto = new UserDto();
@@ -98,7 +104,7 @@ public class AuthService {
 
         ResponseEntity<UserDto> response = new ResponseEntity<>(userDto, headers, HttpStatus.OK);
 //        response.getHeaders().add(HttpHeaders.SET_COOKIE, token);
-
+        System.out.println();
         return response;
     }
 
@@ -128,12 +134,30 @@ public class AuthService {
         return UserDto.from(savedUser);
     }
 
+    //will be called by another microServices/modules to check whether user is authorised to view/perform certain actions
     public SessionStatus validate(String token, Long userId) {
         Optional<Session> sessionOptional = sessionRepository.findByTokenAndUser_Id(token, userId);
 
         if (sessionOptional.isEmpty()) {
             return null;
         }
+        Session session = sessionOptional.get();
+        //validate session is active
+        if(!session.getSessionStatus().equals(SessionStatus.ACTIVE)){
+            return SessionStatus.ENDED;
+        }
+
+        //add validation for expiry time
+        if(session.getExpiringAt().before(new Date())){
+            return SessionStatus.ENDED;
+        }
+
+        // Jwt Decodings
+        Jws<Claims> jwsClaims = Jwts.parser().build().parseSignedClaims(token);
+
+        //jwsclaims is map(String,Object)
+        String email = (String) jwsClaims.getPayload().get("email");
+        List<Role> jwsRoles =  (List<Role>) jwsClaims.getPayload().get("roles");
 
         return SessionStatus.ACTIVE;
     }
