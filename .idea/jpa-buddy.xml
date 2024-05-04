@@ -3,6 +3,9 @@
   <component name="JpaBuddyIdeaProjectConfig">
     <option name="defaultUnitInitialized" value="true" />
     <option name="renamerInitialized" value="true" />
+    <option name="isSnapshotDb" value="false" />
+    <option name="snapshotDbValue" value="d3a5e5b6-2512-467d-804a-52d1cac3e7f1" />
+    <option name="snapshotModelValue" value="Default" />
     <option name="reverseEngineeringLastDbConnectionId" value="d3a5e5b6-2512-467d-804a-52d1cac3e7f1__userservicetestfinalapplication" />
     <option name="reLastEntityCreationPackage" value="src/main/java/dev/nirbhay/userservice" />
   </component>
